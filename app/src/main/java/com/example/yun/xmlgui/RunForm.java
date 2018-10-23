@@ -26,7 +26,9 @@ import java.net.URLConnection;
 
 public class RunForm extends AppCompatActivity {
 
-    /** Called when the activity is first created. */
+    /**
+     * Called when the activity is first created.
+     */
     String tag = RunForm.class.getName();
     XmlGuiForm theForm;
     ProgressDialog progressDialog;
@@ -37,19 +39,17 @@ public class RunForm extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         String formNumber = "";
         Intent startingIntent = getIntent();
-        if(startingIntent == null) {
-            Log.e(tag,"No Intent?  We're not supposed to be here...");
+        if (startingIntent == null) {
+            Log.e(tag, "No Intent?  We're not supposed to be here...");
             finish();
             return;
         }
         formNumber = startingIntent.getStringExtra("formNumber");
-        Log.i(tag,"Running Form [" + formNumber + "]");
+        Log.i(tag, "Running Form [" + formNumber + "]");
         if (GetFormData(formNumber)) {
             DisplayForm();
-        }
-        else
-        {
-            Log.e(tag,"Couldn't parse the Form.");
+        } else {
+            Log.e(tag, "Couldn't parse the Form.");
             AlertDialog.Builder bd = new AlertDialog.Builder(this);
             AlertDialog ad = bd.create();
             ad.setTitle("Error");
@@ -63,9 +63,9 @@ public class RunForm extends AppCompatActivity {
 
     private boolean GetFormData(String formNumber) {
         try {
-            Log.i(tag,"ProcessForm");
+            Log.i(tag, "ProcessForm");
             URL url = new URL("http://www.example.com/xmlgui" + formNumber + ".xml");
-            Log.i(tag,url.toString());
+            Log.i(tag, url.toString());
             InputStream is = url.openConnection().getInputStream();
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = factory.newDocumentBuilder();
@@ -75,7 +75,7 @@ public class RunForm extends AppCompatActivity {
             NodeList forms = root.getElementsByTagName("form");
             if (forms.getLength() < 1) {
                 // nothing here??
-                Log.e(tag,"No form, let's bail");
+                Log.e(tag, "No form, let's bail");
                 return false;
             }
             Node form = forms.item(0);
@@ -92,10 +92,10 @@ public class RunForm extends AppCompatActivity {
 
             // now process the fields
             NodeList fields = root.getElementsByTagName("field");
-            for (int i=0;i<fields.getLength();i++) {
+            for (int i = 0; i < fields.getLength(); i++) {
                 Node fieldNode = fields.item(i);
                 NamedNodeMap attr = fieldNode.getAttributes();
-                XmlGuiFormField tempField =  new XmlGuiFormField();
+                XmlGuiFormField tempField = new XmlGuiFormField();
                 tempField.setName(attr.getNamedItem("name").getNodeValue());
                 tempField.setLabel(attr.getNamedItem("label").getNodeValue());
                 tempField.setType(attr.getNamedItem("type").getNodeValue());
@@ -107,20 +107,18 @@ public class RunForm extends AppCompatActivity {
                 theForm.getFields().add(tempField);
             }
 
-            Log.i(tag,theForm.toString());
+            Log.i(tag, theForm.toString());
             return true;
         } catch (Exception e) {
-            Log.e(tag,"Error occurred in ProcessForm:" + e.getMessage());
+            Log.e(tag, "Error occurred in ProcessForm:" + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    private boolean DisplayForm()
-    {
+    private boolean DisplayForm() {
 
-        try
-        {
+        try {
             ScrollView sv = new ScrollView(this);
 
             final LinearLayout ll = new LinearLayout(this);
@@ -130,23 +128,23 @@ public class RunForm extends AppCompatActivity {
             // walk through the form elements and dynamically create them,
             // leveraging the mini library of tools.
             int i;
-            for (i=0;i<theForm.fields.size();i++) {
+            for (i = 0; i < theForm.fields.size(); i++) {
                 if (theForm.fields.elementAt(i).getType().equals("text")) {
                     theForm.fields.elementAt(i).obj = new
-                            XmlGuiEditBox(this,(theForm.fields.elementAt(i).isRequired()
-                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(),"");
+                            XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired()
+                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
                     ll.addView((View) theForm.fields.elementAt(i).obj);
                 }
                 if (theForm.fields.elementAt(i).getType().equals("numeric")) {
                     theForm.fields.elementAt(i).obj = new
-                            XmlGuiEditBox(this,(theForm.fields.elementAt(i).isRequired()
-                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(),"");
-                    ((XmlGuiEditBox)theForm.fields.elementAt(i).obj).makeNumeric();
+                            XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired()
+                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
+                    ((XmlGuiEditBox) theForm.fields.elementAt(i).obj).makeNumeric();
                     ll.addView((View) theForm.fields.elementAt(i).obj);
                 }
                 if (theForm.fields.elementAt(i).getType().equals("choice")) {
                     theForm.fields.elementAt(i).obj = new
-                            XmlGuiPickOne(this,(theForm.fields.elementAt(i).isRequired()
+                            XmlGuiPickOne(this, (theForm.fields.elementAt(i).isRequired()
                             ? "*" : "") + theForm.fields.elementAt(i).getLabel(),
                             theForm.fields.elementAt(i).getOptions());
                     ll.addView((View) theForm.fields.elementAt(i).obj);
@@ -165,8 +163,7 @@ public class RunForm extends AppCompatActivity {
             btn.setOnClickListener(new Button.OnClickListener() {
                 public void onClick(View v) {
                     // check if this form is Valid
-                    if (!CheckForm())
-                    {
+                    if (!CheckForm()) {
                         AlertDialog.Builder bd = new AlertDialog.Builder(ll.getContext());
                         AlertDialog ad = bd.create();
                         ad.setTitle("Error");
@@ -178,7 +175,7 @@ public class RunForm extends AppCompatActivity {
                     if (theForm.getSubmitTo().equals("loopback")) {
                         // just display the results to the screen
                         String formResults = theForm.getFormattedResults();
-                        Log.i(tag,formResults);
+                        Log.i(tag, formResults);
                         AlertDialog.Builder bd = new AlertDialog.Builder(ll.getContext());
                         AlertDialog ad = bd.create();
                         ad.setTitle("Results");
@@ -198,7 +195,7 @@ public class RunForm extends AppCompatActivity {
                     }
 
                 }
-            } );
+            });
 
             setContentView(sv);
             setTitle(theForm.getFormName());
@@ -206,22 +203,21 @@ public class RunForm extends AppCompatActivity {
             return true;
 
         } catch (Exception e) {
-            Log.e(tag,"Error Displaying Form");
+            Log.e(tag, "Error Displaying Form");
             return false;
         }
     }
 
-    private boolean CheckForm()
-    {
+    private boolean CheckForm() {
         try {
             int i;
             boolean good = true;
 
 
-            for (i=0;i<theForm.fields.size();i++) {
+            for (i = 0; i < theForm.fields.size(); i++) {
                 String fieldValue = (String)
                         theForm.fields.elementAt(i).getData();
-                Log.i(tag,theForm.fields.elementAt(i)
+                Log.i(tag, theForm.fields.elementAt(i)
                         .getName() + " is [" + fieldValue + "]");
                 if (theForm.fields.elementAt(i).isRequired()) {
                     if (fieldValue == null) {
@@ -235,19 +231,18 @@ public class RunForm extends AppCompatActivity {
                 }
             }
             return good;
-        } catch(Exception e) {
-            Log.e(tag,"Error in CheckForm()::" + e.getMessage());
+        } catch (Exception e) {
+            Log.e(tag, "Error in CheckForm()::" + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    private boolean SubmitForm()
-    {
+    private boolean SubmitForm() {
         try {
             boolean ok = true;
             this.progressDialog = ProgressDialog.show(this,
-                    theForm.getFormName(), "Saving Form Data", true,false);
+                    theForm.getFormName(), "Saving Form Data", true, false);
             this.progressHandler = new Handler() {
 
                 @Override
@@ -277,7 +272,7 @@ public class RunForm extends AppCompatActivity {
 
             return ok;
         } catch (Exception e) {
-            Log.e(tag,"Error in SubmitForm()::" + e.getMessage());
+            Log.e(tag, "Error in SubmitForm()::" + e.getMessage());
             e.printStackTrace();
             // tell user that the submission failed....
             Message msg = new Message();
@@ -293,6 +288,7 @@ public class RunForm extends AppCompatActivity {
     private class TransmitFormData implements Runnable {
         XmlGuiForm _form;
         Message msg;
+
         TransmitFormData(XmlGuiForm form) {
             this._form = form;
         }

@@ -76,6 +76,12 @@ public class XmlGuiFormField {
         return sb.toString();
     }
 
+    public String getFormattedResult()
+    {
+        return this.name + "= [" + (String) this.getData() + "]";
+
+    }
+
 
     public Object getData()
     {
