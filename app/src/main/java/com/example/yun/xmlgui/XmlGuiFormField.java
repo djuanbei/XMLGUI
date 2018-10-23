@@ -1,3 +1,5 @@
+package com.example.yun.xmlgui;
+
 public class XmlGuiFormField {
 
     String name;

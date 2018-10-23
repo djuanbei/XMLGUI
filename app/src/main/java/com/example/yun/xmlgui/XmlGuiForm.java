@@ -1,3 +1,5 @@
+package com.example.yun.xmlgui;
+
 import java.util.Vector;
 
 public class XmlGuiForm {
