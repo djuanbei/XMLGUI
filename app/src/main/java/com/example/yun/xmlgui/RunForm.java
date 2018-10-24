@@ -1,31 +1,51 @@
+/*
+ * XmlGui application.
+ * Written by Frank Ableson for IBM Developerworks
+ * June 2010
+ * Use the code as you wish -- no warranty of fitness, etc, etc.
+ */
 package com.example.yun.xmlgui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Intent;
-import android.os.Handler;
-import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.content.Intent;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.BufferedOutputStream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
-public class RunForm extends AppCompatActivity {
+import android.app.AlertDialog.*;
 
+import java.util.ListIterator;
+import java.lang.Thread;
+
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ScrollView;
+import android.widget.LinearLayout;
+import android.widget.Button;
+import android.widget.LinearLayout.LayoutParams;
+import android.app.ProgressDialog;
+import android.os.Handler;
+import android.os.Message;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.NamedNodeMap;
+
+
+public class RunForm extends Activity {
+
+    static  final String WEBSITE="http://47.95.215.87:8080/onlinetable";
     /**
      * Called when the activity is first created.
      */
@@ -35,7 +55,7 @@ public class RunForm extends AppCompatActivity {
     Handler progressHandler;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         String formNumber = "";
         Intent startingIntent = getIntent();
@@ -57,64 +77,8 @@ public class RunForm extends AppCompatActivity {
             ad.show();
 
         }
-
-
     }
 
-    private boolean GetFormData(String formNumber) {
-        try {
-            Log.i(tag, "ProcessForm");
-            URL url = new URL("http://www.example.com/xmlgui" + formNumber + ".xml");
-            Log.i(tag, url.toString());
-            InputStream is = url.openConnection().getInputStream();
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = factory.newDocumentBuilder();
-
-            Document dom = db.parse(is);
-            Element root = dom.getDocumentElement();
-            NodeList forms = root.getElementsByTagName("form");
-            if (forms.getLength() < 1) {
-                // nothing here??
-                Log.e(tag, "No form, let's bail");
-                return false;
-            }
-            Node form = forms.item(0);
-            theForm = new XmlGuiForm();
-
-            // process form level
-            NamedNodeMap map = form.getAttributes();
-            theForm.setFormNumber(map.getNamedItem("id").getNodeValue());
-            theForm.setFormName(map.getNamedItem("name").getNodeValue());
-            if (map.getNamedItem("submitTo") != null)
-                theForm.setSubmitTo(map.getNamedItem("submitTo").getNodeValue());
-            else
-                theForm.setSubmitTo("loopback");
-
-            // now process the fields
-            NodeList fields = root.getElementsByTagName("field");
-            for (int i = 0; i < fields.getLength(); i++) {
-                Node fieldNode = fields.item(i);
-                NamedNodeMap attr = fieldNode.getAttributes();
-                XmlGuiFormField tempField = new XmlGuiFormField();
-                tempField.setName(attr.getNamedItem("name").getNodeValue());
-                tempField.setLabel(attr.getNamedItem("label").getNodeValue());
-                tempField.setType(attr.getNamedItem("type").getNodeValue());
-                if (attr.getNamedItem("required").getNodeValue().equals("Y"))
-                    tempField.setRequired(true);
-                else
-                    tempField.setRequired(false);
-                tempField.setOptions(attr.getNamedItem("options").getNodeValue());
-                theForm.getFields().add(tempField);
-            }
-
-            Log.i(tag, theForm.toString());
-            return true;
-        } catch (Exception e) {
-            Log.e(tag, "Error occurred in ProcessForm:" + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
 
     private boolean DisplayForm() {
 
@@ -125,37 +89,27 @@ public class RunForm extends AppCompatActivity {
             sv.addView(ll);
             ll.setOrientation(android.widget.LinearLayout.VERTICAL);
 
-            // walk through the form elements and dynamically create them,
-            // leveraging the mini library of tools.
+            // walk thru our form elements and dynamically create them, leveraging our mini library of tools.
             int i;
             for (i = 0; i < theForm.fields.size(); i++) {
                 if (theForm.fields.elementAt(i).getType().equals("text")) {
-                    theForm.fields.elementAt(i).obj = new
-                            XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired()
-                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
+                    theForm.fields.elementAt(i).obj = new XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired() ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
                     ll.addView((View) theForm.fields.elementAt(i).obj);
                 }
                 if (theForm.fields.elementAt(i).getType().equals("numeric")) {
-                    theForm.fields.elementAt(i).obj = new
-                            XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired()
-                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
+                    theForm.fields.elementAt(i).obj = new XmlGuiEditBox(this, (theForm.fields.elementAt(i).isRequired() ? "*" : "") + theForm.fields.elementAt(i).getLabel(), "");
                     ((XmlGuiEditBox) theForm.fields.elementAt(i).obj).makeNumeric();
                     ll.addView((View) theForm.fields.elementAt(i).obj);
                 }
                 if (theForm.fields.elementAt(i).getType().equals("choice")) {
-                    theForm.fields.elementAt(i).obj = new
-                            XmlGuiPickOne(this, (theForm.fields.elementAt(i).isRequired()
-                            ? "*" : "") + theForm.fields.elementAt(i).getLabel(),
-                            theForm.fields.elementAt(i).getOptions());
+                    theForm.fields.elementAt(i).obj = new XmlGuiPickOne(this, (theForm.fields.elementAt(i).isRequired() ? "*" : "") + theForm.fields.elementAt(i).getLabel(), theForm.fields.elementAt(i).getOptions());
                     ll.addView((View) theForm.fields.elementAt(i).obj);
                 }
             }
 
 
-            Button btn = new Button(this);
-            btn.setLayoutParams(new LinearLayout.LayoutParams
-                    (ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.
-                            WRAP_CONTENT));
+            Button btn = new Button(httpthis);
+            btn.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
             ll.addView(btn);
 
@@ -208,41 +162,10 @@ public class RunForm extends AppCompatActivity {
         }
     }
 
-    private boolean CheckForm() {
-        try {
-            int i;
-            boolean good = true;
-
-
-            for (i = 0; i < theForm.fields.size(); i++) {
-                String fieldValue = (String)
-                        theForm.fields.elementAt(i).getData();
-                Log.i(tag, theForm.fields.elementAt(i)
-                        .getName() + " is [" + fieldValue + "]");
-                if (theForm.fields.elementAt(i).isRequired()) {
-                    if (fieldValue == null) {
-                        good = false;
-                    } else {
-                        if (fieldValue.trim().length() == 0) {
-                            good = false;
-                        }
-                    }
-
-                }
-            }
-            return good;
-        } catch (Exception e) {
-            Log.e(tag, "Error in CheckForm()::" + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     private boolean SubmitForm() {
         try {
             boolean ok = true;
-            this.progressDialog = ProgressDialog.show(this,
-                    theForm.getFormName(), "Saving Form Data", true, false);
+            this.progressDialog = ProgressDialog.show(this, theForm.getFormName(), "Saving Form Data", true, false);
             this.progressHandler = new Handler() {
 
                 @Override
@@ -274,7 +197,7 @@ public class RunForm extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(tag, "Error in SubmitForm()::" + e.getMessage());
             e.printStackTrace();
-            // tell user that the submission failed....
+            // tell user we failed....
             Message msg = new Message();
             msg.what = 1;
             this.progressHandler.sendMessage(msg);
@@ -284,6 +207,87 @@ public class RunForm extends AppCompatActivity {
 
     }
 
+    private boolean CheckForm() {
+        try {
+            int i;
+            boolean good = true;
+
+
+            for (i = 0; i < theForm.fields.size(); i++) {
+                String fieldValue = (String) theForm.fields.elementAt(i).getData();
+                Log.i(tag, theForm.fields.elementAt(i).getName() + " is [" + fieldValue + "]");
+                if (theForm.fields.elementAt(i).isRequired()) {
+                    if (fieldValue == null) {
+                        good = false;
+                    } else {
+                        if (fieldValue.trim().length() == 0) {
+                            good = false;
+                        }
+                    }
+
+                }
+            }
+            return good;
+        } catch (Exception e) {
+            Log.e(tag, "Error in CheckForm()::" + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean GetFormData(String formNumber) {
+        try {
+            Log.i(tag, "ProcessForm");
+            URL url = new URL(WEBSITE+"/xmlgui" + formNumber + ".xml");
+            Log.i(tag, url.toString());
+            InputStream is = url.openConnection().getInputStream();
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = factory.newDocumentBuilder();
+            Document dom = db.parse(is);
+            Element root = dom.getDocumentElement();
+            NodeList forms = root.getElementsByTagName("form");
+            if (forms.getLength() < 1) {
+                // nothing here??
+                Log.e(tag, "No form, let's bail");
+                return false;
+            }
+            Node form = forms.item(0);
+            theForm = new XmlGuiForm();
+
+            // process form level
+            NamedNodeMap map = form.getAttributes();
+            theForm.setFormNumber(map.getNamedItem("id").getNodeValue());
+            theForm.setFormName(map.getNamedItem("name").getNodeValue());
+            if (map.getNamedItem("submitTo") != null)
+                theForm.setSubmitTo(map.getNamedItem("submitTo").getNodeValue());
+            else
+                theForm.setSubmitTo("loopback");
+
+            // now process the fields
+            NodeList fields = root.getElementsByTagName("field");
+            for (int i = 0; i < fields.getLength(); i++) {
+                Node fieldNode = fields.item(i);
+                NamedNodeMap attr = fieldNode.getAttributes();
+                XmlGuiFormField tempField = new XmlGuiFormField();
+                tempField.setName(attr.getNamedItem("name").getNodeValue());
+                tempField.setLabel(attr.getNamedItem("label").getNodeValue());
+                tempField.setType(attr.getNamedItem("type").getNodeValue());
+                if (attr.getNamedItem("required").getNodeValue().equals("Y"))
+                    tempField.setRequired(true);
+                else
+                    tempField.setRequired(false);
+                tempField.setOptions(attr.getNamedItem("options").getNodeValue());
+                theForm.getFields().add(tempField);
+            }
+
+            Log.i(tag, theForm.toString());
+            return true;
+        } catch (Exception e) {
+            Log.e(tag, "Error occurred in ProcessForm:" + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     private class TransmitFormData implements Runnable {
         XmlGuiForm _form;
@@ -304,8 +308,7 @@ public class RunForm extends AppCompatActivity {
                 URL url = new URL(_form.getSubmitTo());
                 URLConnection conn = url.openConnection();
                 conn.setDoOutput(true);
-                BufferedOutputStream wr = new BufferedOutputStream
-                        (conn.getOutputStream());
+                BufferedOutputStream wr = new BufferedOutputStream(conn.getOutputStream());
                 String data = _form.getFormEncodedData();
                 wr.write(data.getBytes());
                 wr.flush();
@@ -317,8 +320,7 @@ public class RunForm extends AppCompatActivity {
                 progressHandler.sendMessage(msg);
 
                 // Get the response
-                BufferedReader rd = new BufferedReader(new
-                        InputStreamReader(conn.getInputStream()));
+                BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 String line = "";
                 Boolean bSuccess = false;
                 while ((line = rd.readLine()) != null) {
@@ -354,6 +356,6 @@ public class RunForm extends AppCompatActivity {
             msg.what = 2;
             progressHandler.sendMessage(msg);
         }
-    }
 
-}
+    }
+} 
