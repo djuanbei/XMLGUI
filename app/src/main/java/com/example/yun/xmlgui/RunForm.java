@@ -108,7 +108,7 @@ public class RunForm extends Activity {
             }
 
 
-            Button btn = new Button(httpthis);
+            Button btn = new Button(this);
             btn.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
             ll.addView(btn);
