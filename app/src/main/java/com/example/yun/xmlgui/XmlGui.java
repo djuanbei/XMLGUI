@@ -23,7 +23,10 @@ public class XmlGui extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
+	// connect internet need
+	    
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         Button btnRunForm = (Button) this.findViewById(R.id.btnRunForm);
         btnRunForm.setOnClickListener(new Button.OnClickListener()
         {
